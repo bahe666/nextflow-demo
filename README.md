@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NextFlow Demo — Lingo.dev 自动化国际化演示
 
-## Getting Started
+本项目演示了 [Lingo.dev](https://lingo.dev) 编译器如何在 Next.js 项目中实现"只写中文代码，自动生成英文版网站"。
 
-First, run the development server:
+## 技术栈
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+| 技术 | 说明 |
+|------|------|
+| **Next.js 15** | React 全栈框架 |
+| **TypeScript** | 类型安全的 JavaScript |
+| **Tailwind CSS** | 原子化 CSS 工具 |
+| **@lingo.dev/compiler** | 构建时自动翻译编译器 |
+| **Vitest** | 单元测试框架 |
+| **Playwright** | E2E 端到端测试框架 |
+
+## 项目结构
+
+```
+nextflow-demo/
+├── app/
+│   ├── layout.tsx          # 根布局（包裹 LingoProvider）
+│   ├── page.tsx            # 首页（中文）
+│   ├── globals.css         # 全局样式
+│   ├── pricing/page.tsx    # 定价页（中文）
+│   ├── register/page.tsx   # 注册页（中文）
+│   └── lingo/              # Lingo.dev 翻译缓存（自动生成）
+├── lib/
+│   └── validation.ts       # 邮箱校验工具函数
+├── middleware.ts            # URL 路径路由（/en → 设置 locale cookie）
+├── next.config.ts          # Next.js + Lingo.dev 配置
+├── __tests__/              # 单元测试
+├── e2e/                    # E2E 测试
+├── .env.local              # API Key（不提交到 Git）
+└── vitest.config.ts        # Vitest 配置
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Lingo.dev 工作原理
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+源代码中所有页面文字都是中文硬编码，不使用任何 i18n 库（如 react-intl、i18next 等）。Lingo.dev 编译器在构建时自动扫描 JSX 中的文本，通过 AI 翻译引擎生成英文版本，并将翻译结果缓存到 `.next/en.json` 中。
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+运行时，LingoProvider 根据用户的 locale cookie 决定展示源语言还是翻译后的内容。整个过程对开发者透明 — 你只需要用母语写代码。
 
-## Learn More
+术语一致性通过 `prompt` 配置实现：在翻译指令中嵌入品牌术语表，确保"免费开始使用"始终翻译为"Get Started Free"而非其他变体。
 
-To learn more about Next.js, take a look at the following resources:
+## 本地开发
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+npm install
+npm run dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+访问 http://localhost:3000
 
-## Deploy on Vercel
+## 翻译构建
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run build   # 构建并自动翻译
+npm run start   # 预览生产版本
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- 访问 `/` 查看中文版
+- 访问 `/en` 查看英文版
+
+## 运行测试
+
+```bash
+npm test         # 单元测试
+npm run test:e2e # E2E 测试（需要先 build + start）
+```
+
+## 环境变量
+
+在 `.env.local` 中配置（不要提交到 Git）：
+
+```
+OPENAI_API_KEY=你的 API Key
+OPENAI_BASE_URL=你的 API Base URL
+```
+
+## 部署
+
+推荐部署到 Vercel。在 Vercel 的环境变量中配置 `OPENAI_API_KEY` 和 `OPENAI_BASE_URL`。

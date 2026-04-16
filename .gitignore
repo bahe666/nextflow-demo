@@ -34,3 +34,12 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# playwright
+/test-results/
+/playwright-report/
+
+# lingo.dev build cache
+app/lingo/metadata-build/
+app/lingo/metadata-dev/
+app/lingo/translation-server.log
