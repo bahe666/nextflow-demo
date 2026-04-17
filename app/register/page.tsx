@@ -4,44 +4,35 @@ import { useState } from "react";
 import Link from "next/link";
 import { validateEmail } from "@/lib/validation";
 
-type FormStatus = "idle" | "loading" | "success";
+type FormStatus = "idle" | "loading" | "success" | "error-email" | "error-password-short" | "error-password-mismatch" | "error-duplicate" | "error-network";
 
 export default function RegisterPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [status, setStatus] = useState<FormStatus>("idle");
-  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
 
-    if (!email.trim()) {
-      setError("请输入有效的邮箱地址");
-      return;
-    }
-    if (!validateEmail(email)) {
-      setError("请输入有效的邮箱地址");
+    if (!email.trim() || !validateEmail(email)) {
+      setStatus("error-email");
       return;
     }
     if (password.length < 8) {
-      setError("密码至少需要 8 位");
+      setStatus("error-password-short");
       return;
     }
     if (password !== confirmPassword) {
-      setError("两次输入的密码不一致");
+      setStatus("error-password-mismatch");
       return;
     }
 
     setStatus("loading");
 
-    // 模拟提交
     setTimeout(() => {
-      // 模拟邮箱重复的情况
       if (email === "test@example.com") {
-        setStatus("idle");
-        setError("该邮箱已注册，请直接登录");
+        setStatus("error-duplicate");
         return;
       }
       setStatus("success");
@@ -71,6 +62,8 @@ export default function RegisterPage() {
     );
   }
 
+  const isLoading = status === "loading";
+
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-6">
       <div className="max-w-md w-full">
@@ -94,7 +87,7 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="请输入工作邮箱"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => { setEmail(e.target.value); setStatus("idle"); }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900 placeholder-gray-400"
               />
             </div>
@@ -107,7 +100,7 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="至少 8 位，建议包含数字和字母"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setStatus("idle"); }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900 placeholder-gray-400"
               />
             </div>
@@ -120,25 +113,41 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="再次输入密码"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
+                onChange={(e) => { setConfirmPassword(e.target.value); setStatus("idle"); }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-colors text-gray-900 placeholder-gray-400"
               />
             </div>
 
-            {error && (
-              <p className="text-red-600 text-sm">{error}</p>
+            {status === "error-email" && (
+              <p className="text-red-600 text-sm">请输入有效的邮箱地址</p>
+            )}
+            {status === "error-password-short" && (
+              <p className="text-red-600 text-sm">密码至少需要 8 位</p>
+            )}
+            {status === "error-password-mismatch" && (
+              <p className="text-red-600 text-sm">两次输入的密码不一致</p>
+            )}
+            {status === "error-duplicate" && (
+              <p className="text-red-600 text-sm">该邮箱已注册，请直接登录</p>
+            )}
+            {status === "error-network" && (
+              <p className="text-red-600 text-sm">网络异常，请稍后重试</p>
             )}
 
             <button
               type="submit"
-              disabled={status === "loading"}
+              disabled={isLoading}
               className={`w-full py-3 rounded-lg font-medium transition-colors ${
-                status === "loading"
+                isLoading
                   ? "bg-gray-400 text-white cursor-not-allowed"
                   : "bg-blue-700 text-white hover:bg-blue-800"
               }`}
             >
-              {status === "loading" ? "注册中..." : "立即注册"}
+              {isLoading ? (
+                <span>注册中...</span>
+              ) : (
+                <span>立即注册</span>
+              )}
             </button>
           </form>
         </div>
